@@ -3,13 +3,16 @@
  * Starts the Express server and handles graceful shutdown
  */
 
+import cluster from 'node:cluster'
 import http from 'node:http'
+import path from 'path'
+import { Worker } from 'worker_threads'
 
 import app from '@/app'
-import cpuMonitor from '@/utils/cpuMonitor'
 import { closeDatabase, initializeDatabase } from '@config/database'
 import { env } from '@config/env'
 import logger from '@config/logger'
+import cpuMonitor from '@utils/cpuMonitor'
 
 /**
  * Centralized shutdown function
@@ -27,6 +30,8 @@ const shutdown = (code: number, reason: string): void => {
  * @returns Promise that resolves when server starts successfully
  */
 const startServer = async (): Promise<void> => {
+  let messageProcessor: Worker | null = null
+
   try {
     // Initialize database
     await initializeDatabase()
@@ -43,6 +48,27 @@ const startServer = async (): Promise<void> => {
 
       // Start CPU monitoring
       cpuMonitor.start()
+
+      // Start scheduled message processor
+      messageProcessor = new Worker(
+        path.join(
+          process.cwd(),
+          'src/workers/scheduledMessageProcessor.worker.ts'
+        ),
+        {
+          execArgv: ['-r', 'ts-node/register'],
+        }
+      )
+      messageProcessor.on('error', (error) => {
+        logger.error('Scheduled message processor error:', error)
+      })
+      messageProcessor.on('exit', (code) => {
+        if (code !== 0) {
+          logger.error(
+            `Scheduled message processor stopped with exit code ${code}`
+          )
+        }
+      })
     })
 
     // Graceful shutdown handling
@@ -51,6 +77,11 @@ const startServer = async (): Promise<void> => {
 
       // Stop CPU monitoring
       cpuMonitor.stop()
+
+      // Terminate scheduled message processor
+      if (messageProcessor) {
+        void messageProcessor.terminate()
+      }
 
       server.close(() => {
         logger.info('Server closed successfully')
@@ -76,7 +107,13 @@ const startServer = async (): Promise<void> => {
 
 // Start the server if this file is run directly
 if (require.main === module) {
-  void startServer()
+  if (cluster.isPrimary) {
+    void startServer()
+  } else {
+    // This is a cluster worker - run the CSV cluster worker
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('./workers/csvClusterWorker')
+  }
 }
 
 export default startServer

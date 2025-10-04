@@ -84,6 +84,12 @@ agentSchema.virtual('policies', {
   foreignField: 'agentId',
 })
 
+agentSchema.virtual('users', {
+  ref: 'User',
+  localField: '_id',
+  foreignField: 'agentId',
+})
+
 // Ensure virtual fields are serialized
 agentSchema.set('toJSON', { virtuals: true })
 agentSchema.set('toObject', { virtuals: true })

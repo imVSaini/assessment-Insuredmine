@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { model, Schema, Types } from 'mongoose'
 
 import { BaseDocument } from './BaseModel'
 
@@ -19,15 +19,16 @@ export interface IUser extends BaseDocument {
   firstName: string
   lastName?: string
   email: string
-  phone?: string
+  phoneNumber?: string
   gender?: UserGender
   dateOfBirth?: Date
   address?: string
   city?: string
   state?: string
-  zip?: string
+  zipCode?: string
   userType: UserType
   applicantId?: string
+  agentId: Types.ObjectId
   isActive: boolean
 }
 
@@ -55,7 +56,7 @@ const userSchema = new Schema<IUser>(
         'Please provide a valid email',
       ],
     },
-    phone: {
+    phoneNumber: {
       type: String,
       trim: true,
       match: [/^\+?[\d\s()-]+$/, 'Please provide a valid phone number'],
@@ -92,7 +93,7 @@ const userSchema = new Schema<IUser>(
       trim: true,
       maxlength: [50, 'State cannot exceed 50 characters'],
     },
-    zip: {
+    zipCode: {
       type: String,
       trim: true,
       match: [/^\d{5}(-\d{4})?$/, 'Please provide a valid ZIP code'], // eslint-disable-line security/detect-unsafe-regex
@@ -110,6 +111,11 @@ const userSchema = new Schema<IUser>(
       trim: true,
       maxlength: [50, 'Applicant ID cannot exceed 50 characters'],
     },
+    agentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Agent',
+      required: [true, 'Agent ID is required'],
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -125,6 +131,7 @@ userSchema.index({ firstName: 1, lastName: 1 })
 userSchema.index({ userType: 1 })
 userSchema.index({ isActive: 1 })
 userSchema.index({ applicantId: 1 })
+userSchema.index({ agentId: 1 })
 
 // Virtual relationships
 userSchema.virtual('policies', {
@@ -137,6 +144,13 @@ userSchema.virtual('accounts', {
   ref: 'UserAccount',
   localField: '_id',
   foreignField: 'userId',
+})
+
+userSchema.virtual('agent', {
+  ref: 'Agent',
+  localField: 'agentId',
+  foreignField: '_id',
+  justOne: true,
 })
 
 // Ensure virtual fields are serialized

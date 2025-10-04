@@ -7,7 +7,9 @@ import { BaseDocument } from './BaseModel'
  */
 export enum ScheduledMessageStatus {
   PENDING = 'pending',
+  PROCESSING = 'processing',
   SENT = 'sent',
+  FAILED = 'failed',
 }
 
 /**
@@ -17,7 +19,11 @@ export interface IScheduledMessage extends BaseDocument {
   message: string
   day: string
   time: string
+  scheduledDateTime?: Date
+  recipient?: string | null
+  priority?: string
   status: ScheduledMessageStatus
+  errorMessage?: string
 }
 
 /**
@@ -43,14 +49,36 @@ const scheduledMessageSchema = new Schema<IScheduledMessage>(
       trim: true,
       match: [/^([01]?\d|2[0-3]):[0-5]\d$/, 'Time must be in HH:MM format'],
     },
+    scheduledDateTime: {
+      type: Date,
+      required: false,
+    },
+    recipient: {
+      type: String,
+      required: false,
+      default: null,
+    },
+    priority: {
+      type: String,
+      required: false,
+      enum: {
+        values: ['low', 'medium', 'high'],
+        message: 'Priority must be one of: low, medium, high',
+      },
+      default: 'medium',
+    },
     status: {
       type: String,
       required: [true, 'Status is required'],
       enum: {
         values: Object.values(ScheduledMessageStatus),
-        message: 'Status must be one of: pending, sent',
+        message: 'Status must be one of: pending, processing, sent, failed',
       },
       default: ScheduledMessageStatus.PENDING,
+    },
+    errorMessage: {
+      type: String,
+      required: false,
     },
   },
   {

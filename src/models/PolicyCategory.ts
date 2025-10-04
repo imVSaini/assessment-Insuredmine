@@ -31,6 +31,18 @@ const policyCategorySchema = new Schema<IPolicyCategory>(
 /**
  * Create indexes
  */
+policyCategorySchema.index({ categoryName: 1 })
+
+// Virtual relationships
+policyCategorySchema.virtual('policies', {
+  ref: 'Policy',
+  localField: '_id',
+  foreignField: 'policyCategoryId',
+})
+
+// Ensure virtual fields are serialized
+policyCategorySchema.set('toJSON', { virtuals: true })
+policyCategorySchema.set('toObject', { virtuals: true })
 
 /**
  * PolicyCategory model

@@ -4,7 +4,6 @@ import express from 'express'
 import morgan from 'morgan'
 import swaggerUi from 'swagger-ui-express'
 
-import healthRoutes from '@/routes/health.routes'
 import { env } from '@config/env'
 import logger from '@config/logger'
 import { swaggerSpec, swaggerUiOptions } from '@config/swagger'
@@ -12,6 +11,10 @@ import { errorHandler } from '@middlewares/errorHandler.middleware'
 import { notFound } from '@middlewares/notFound.middleware'
 import { generalRateLimiter } from '@middlewares/rateLimit.middleware'
 import { requestId, userAgent } from '@middlewares/request.middleware'
+import healthRoutes from '@routes/health.routes'
+import policyRoutes from '@routes/policy.routes'
+import scheduledMessageRoutes from '@routes/scheduledMessage.routes'
+import uploadRoutes from '@routes/upload.routes'
 
 const REQUEST_LIMITS_OPTIONS = {
   urlencoded: { extended: false, limit: '50kb' },
@@ -38,8 +41,13 @@ app.use(
   swaggerUi.setup(swaggerSpec, swaggerUiOptions)
 )
 
+// Health check route (without API prefix)
+app.use('/health', healthRoutes)
+
 // API routes
-app.use(`${env.API_PREFIX}/health`, healthRoutes)
+app.use(`${env.API_PREFIX}/upload`, uploadRoutes)
+app.use(`${env.API_PREFIX}/policies`, policyRoutes)
+app.use(`${env.API_PREFIX}/scheduled-messages`, scheduledMessageRoutes)
 
 app.use(notFound)
 app.use(errorHandler)

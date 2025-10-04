@@ -28,7 +28,7 @@ export interface IPolicy extends BaseDocument {
   userId: Types.ObjectId
   agentId: Types.ObjectId
   carrierId: Types.ObjectId
-  lobId: Types.ObjectId
+  policyCategoryId: Types.ObjectId
   hasActiveClientPolicy?: boolean
   isActive: boolean
 }
@@ -105,10 +105,10 @@ const policySchema = new Schema<IPolicy>(
       ref: 'Carrier',
       required: [true, 'Agent ID is required'],
     },
-    lobId: {
+    policyCategoryId: {
       type: Schema.Types.ObjectId,
-      ref: 'LOB',
-      required: [true, 'LOB ID is required'],
+      ref: 'PolicyCategory',
+      required: [true, 'Policy Category ID is required'],
     },
     hasActiveClientPolicy: {
       type: Boolean,
@@ -128,7 +128,7 @@ const policySchema = new Schema<IPolicy>(
 policySchema.index({ userId: 1 })
 policySchema.index({ agentId: 1 })
 policySchema.index({ carrierId: 1 })
-policySchema.index({ lobId: 1 })
+policySchema.index({ policyCategoryId: 1 })
 policySchema.index({ policyStartDate: 1, policyEndDate: 1 })
 policySchema.index({ isActive: 1 })
 
@@ -154,9 +154,9 @@ policySchema.virtual('carrier', {
   justOne: true,
 })
 
-policySchema.virtual('lob', {
-  ref: 'LOB',
-  localField: 'lobId',
+policySchema.virtual('policyCategory', {
+  ref: 'PolicyCategory',
+  localField: 'policyCategoryId',
   foreignField: '_id',
   justOne: true,
 })

@@ -65,3 +65,92 @@ export interface ModelResponse<T> extends SuccessResponse<T> {
 export interface ModelListResponse<T> extends SuccessResponse<T[]> {
   count: number
 }
+
+/**
+ * CSV Processing types
+ */
+export interface CSVProcessingResult {
+  processed: number
+  agentsCreated: number
+  usersCreated: number
+  accountsCreated: number
+  categoriesCreated: number
+  carriersCreated: number
+  policiesCreated: number
+  errors: string[]
+}
+
+/**
+ * MongoDB Aggregation Pipeline types
+ */
+export interface LookupStage {
+  $lookup: {
+    from: string
+    localField: string
+    foreignField: string
+    as: string
+  }
+}
+
+export interface UnwindStage {
+  $unwind: string
+}
+
+export interface MatchStage {
+  $match: Record<string, unknown>
+}
+
+export interface GroupStage {
+  $group: Record<string, unknown>
+}
+
+export interface SortStage {
+  $sort: Record<string, 1 | -1>
+}
+
+export interface SkipStage {
+  $skip: number
+}
+
+export interface LimitStage {
+  $limit: number
+}
+
+export interface CountStage {
+  $count: string
+}
+
+export type AggregationStage =
+  | LookupStage
+  | UnwindStage
+  | MatchStage
+  | GroupStage
+  | SortStage
+  | SkipStage
+  | LimitStage
+  | CountStage
+
+/**
+ * Policy Search and Aggregation types
+ */
+export interface PolicySearchParams {
+  username: string
+  page?: number
+  limit?: number
+}
+
+export interface PolicyAggregationParams {
+  page?: number
+  limit?: number
+  userType?: string
+}
+
+export interface PolicyStats {
+  totalPolicies: number
+  totalUsers: number
+  totalAgents: number
+  totalCarriers: number
+  totalCategories: number
+  averagePoliciesPerUser: number
+  totalPremiumAmount: number
+}
